@@ -1,0 +1,15 @@
+<package>
+  <description brief="dvs_filter">
+
+     dvs_filter
+
+  </description>
+  <author>Sangil Lee</author>
+  <depend package="roscpp"/>
+  <depend package="std_msgs"/>
+  <depend package="sensor_msgs"/>
+  <depend package="dvs_msgs"/>
+  <depend package="rosbag"/>
+</package>
+
+
