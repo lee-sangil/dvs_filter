@@ -15,7 +15,7 @@ namespace dvs_filter
         // Setup subscribers and publishers
         _camera_info_sub = _nh.subscribe("camera_info", 1, &Filter::cameraInfoCallback, this);
         _event_sub = _nh.subscribe("events", 10, &Filter::eventsCallback, this);
-        _event_pub = _nh.advertise<dvs_msgs::EventArray>("event_filter", 10);
+        _event_pub = _nh.advertise<dvs_msgs::EventArray>(_ns + "/events", 10);
         _events_msg = dvs_msgs::EventArrayPtr(new dvs_msgs::EventArray());
     }
 
@@ -88,6 +88,8 @@ namespace dvs_filter
             _sae_n[idx_ev] = ts;
         
         _stack[(_counter[idx_ev]++) + _stack_depth*idx_ev] = ts;
+        if (_counter[idx_ev] == _stack_depth)
+            _counter[idx_ev] = 0;
     }
 
     void Filter::lookupNeighber(const dvs_msgs::Event &ev, bool &isAdjacency)
