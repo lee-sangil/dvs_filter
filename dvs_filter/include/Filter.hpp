@@ -17,6 +17,7 @@ namespace dvs_filter
             double max_interval;
             int search_radius;
             int min_flicker_hz;
+            double stack_time_resolution;
         };
 
         Filter(ros::NodeHandle &nh, ros::NodeHandle nh_private);
@@ -43,11 +44,10 @@ namespace dvs_filter
         int _width, _height;
         
         double *_sae_p, *_sae_n;
-
-        uint8_t *_counter;
+        
         int _stack_depth;
-        bool *_fully_stacked;
         double *_stack;
+        uint8_t *_counter;
 
         Parameter _param;
     };

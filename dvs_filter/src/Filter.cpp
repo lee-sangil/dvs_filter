@@ -15,6 +15,7 @@ namespace dvs_filter
         nh_private.param<double>("max_interval", _param.max_interval, 0.01);
         nh_private.param<int>("search_radius", _param.search_radius, 1);
         nh_private.param<int>("min_flicker_hz", _param.min_flicker_hz, 60);
+        _param.stack_time_resolution = 0.1;
 
         // Setup subscribers and publishers
         _camera_info_sub = _nh.subscribe("camera_info", 1, &Filter::cameraInfoCallback, this);
@@ -27,7 +28,6 @@ namespace dvs_filter
     {
         delete[] _sae_p;
         delete[] _sae_n;
-        delete[] _fully_stacked;
         delete[] _stack;
         delete[] _counter;
     }
@@ -43,10 +43,9 @@ namespace dvs_filter
             _sae_p = new double[_width * _height];
             _sae_n = new double[_width * _height];
 
-            _counter = new uint8_t[_width * _height];
-            _stack_depth = std::ceil(_param.min_flicker_hz*.1);
-            _fully_stacked = new bool[_width * _height];
+            _stack_depth = std::ceil((double)_param.min_flicker_hz*_param.stack_time_resolution);
             _stack = new double[_stack_depth * _width * _height];
+            _counter = new uint8_t[_width * _height];
 
             _events_msg->height = _height;
             _events_msg->width = _width;
@@ -114,7 +113,7 @@ namespace dvs_filter
             sae = _sae_p;
             
         const double ts = ev.ts.toSec();
-        const double th_ts = std::max(ts - _param.max_interval,0.);
+        const double th_ts = std::max(ts - _param.max_interval, 0.);
 
         const int min_col = std::max(ev.x-_param.search_radius,0);
         const int max_col = std::min(ev.x+_param.search_radius,_width);
@@ -137,7 +136,15 @@ namespace dvs_filter
 
     void Filter::filkerCounter(const dvs_msgs::Event &ev, bool &isFlicker)
     {
+        const double ts = ev.ts.toSec();
+        const double th_ts = std::max(ts - _param.stack_time_resolution, 0.);
+        
+        const int idx_ev = ev.y + _height * ev.x;
+
         isFlicker = false;
+
+        if (_stack[_counter[idx_ev] + _stack_depth*idx_ev] > th_ts)
+            isFlicker = true;
     }
 
-} // namespace dvs_filter
+} // namespace dvs_filter  
