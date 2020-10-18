@@ -43,7 +43,7 @@ namespace dvs_filter
             _sae_p = new double[_width * _height];
             _sae_n = new double[_width * _height];
 
-            _stack_depth = std::ceil((double)_param.min_flicker_hz*_param.stack_time_resolution);
+            _stack_depth = std::ceil(2.*_param.min_flicker_hz*_param.stack_time_resolution);
             _stack = new double[_stack_depth * _width * _height];
             _counter = new uint8_t[_width * _height];
 
@@ -108,9 +108,9 @@ namespace dvs_filter
     {
         const double * sae;
         if (ev.polarity > 0)
-            sae = _sae_n;
-        else
             sae = _sae_p;
+        else
+            sae = _sae_n;
             
         const double ts = ev.ts.toSec();
         const double th_ts = std::max(ts - _param.max_interval, 0.);

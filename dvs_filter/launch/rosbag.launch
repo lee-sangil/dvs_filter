@@ -12,7 +12,7 @@
 <!-- <env name="GMON_OUT_PREFIX" value="dvs_filter"/> -->
 <!-- Use gprof /path/to/exe ~/.ros/dvs_filter.[pid] | gprof2dot | dot -Tpng -o output.png -->
 <node pkg="dvs_filter" type="dvs_filter" name="dvs_filter" output="screen">
-  <param name="max_interval" type="double" value="0.5"/>
+  <param name="max_interval" type="double" value="0.01"/>
   <param name="search_radius" type="int" value="1"/>
   <param name="min_flicker_hz" type="int" value="60"/>
   <remap from="/events" to="$(arg events)"/> 
