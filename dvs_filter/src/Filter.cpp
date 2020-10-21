@@ -29,6 +29,7 @@ namespace dvs_filter
         delete[] _sae_p;
         delete[] _sae_n;
         delete[] _stack;
+        delete[] _stack_polarity;
         delete[] _counter;
     }
 
@@ -45,7 +46,11 @@ namespace dvs_filter
 
             _stack_depth = std::ceil(2.*_param.min_flicker_hz*_param.stack_time_resolution);
             _stack = new double[_stack_depth * _width * _height];
-            _counter = new uint8_t[_width * _height];
+            _stack_polarity = new bool[_width * _height];
+            _counter = new int8_t[_width * _height];
+
+            for (int i = 0; i < _width*_height; i++)
+                _counter[i] = -1;
 
             _events_msg->height = _height;
             _events_msg->width = _width;
@@ -73,35 +78,57 @@ namespace dvs_filter
                 s_count = msg->header.seq;
             }
 
-            bool isAdjacency, isFlicker;
+            bool isOverlap, isAdjacency, isFlicker;
 
             _events_msg->events.clear();
             for (uint32_t i = 0; i < msg->events.size(); ++i)
             {
-                grabEvent(msg->events[i]);
+                grabEvent(msg->events[i], isOverlap);
                 lookupAdjacency(msg->events[i], isAdjacency);
-                filkerCounter(msg->events[i], isFlicker);
+                flickerCounter(msg->events[i], isFlicker);
 
-                if (isAdjacency & not isFlicker)
+                if (not isOverlap & isAdjacency & not isFlicker)
                     _events_msg->events.emplace_back(msg->events[i]);
             }
             _event_pub.publish(_events_msg);
         }
     }
 
-    void Filter::grabEvent(const dvs_msgs::Event &ev)
+    void Filter::grabEvent(const dvs_msgs::Event &ev, bool &isOverlap)
     {
+        isOverlap = true;
         const double ts = ev.ts.toSec();
         const int idx_ev = ev.y + _height * ev.x;
 
         if (ev.polarity > 0)
-            _sae_p[idx_ev] = ts;
+        {
+            if (_sae_p[idx_ev] <= _sae_n[idx_ev])
+            {
+                _sae_p[idx_ev] = ts;
+                isOverlap = false;
+            }
+        }
         else
-            _sae_n[idx_ev] = ts;
+        {
+            if (_sae_p[idx_ev] >= _sae_n[idx_ev])
+            {
+                _sae_n[idx_ev] = ts;
+                isOverlap = false;
+            }
+        }
         
-        _stack[(_counter[idx_ev]++) + _stack_depth*idx_ev] = ts;
-        if (_counter[idx_ev] == _stack_depth)
-            _counter[idx_ev] = 0;
+        if (_counter[idx_ev] >= 0 && _stack_polarity[idx_ev] != ev.polarity || _counter[idx_ev] < 0)
+        {
+            if (_counter[idx_ev] < 0)
+                _counter[idx_ev] = 0;
+
+            _stack_polarity[idx_ev] = ev.polarity;
+            _stack[_counter[idx_ev] + _stack_depth*idx_ev] = ts;
+            _counter[idx_ev]++;
+
+            if (_counter[idx_ev] == _stack_depth)
+                _counter[idx_ev] = 0;
+        }
     }
 
     void Filter::lookupAdjacency(const dvs_msgs::Event &ev, bool &isAdjacency)
@@ -134,7 +161,7 @@ namespace dvs_filter
         }
     }
 
-    void Filter::filkerCounter(const dvs_msgs::Event &ev, bool &isFlicker)
+    void Filter::flickerCounter(const dvs_msgs::Event &ev, bool &isFlicker)
     {
         const double ts = ev.ts.toSec();
         const double th_ts = std::max(ts - _param.stack_time_resolution, 0.);

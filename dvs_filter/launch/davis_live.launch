@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<launch>
+
+<arg name="file" default="/home/icsl/Downloads/shapes_rotation.bag"/>
+<arg name="events" default="/dvs/events"/>
+<arg name="image" default="/dvs/image_raw"/>
+<arg name="camera_info" default="/dvs/camera_info"/>
+
+<!-- camera driver -->
+<node name="davis_ros_driver" pkg="davis_ros_driver" type="davis_ros_driver"/>
+
+<!-- filter -->
+<!-- <env name="GMON_OUT_PREFIX" value="dvs_filter"/> -->
+<!-- Use gprof /path/to/exe ~/.ros/dvs_filter.[pid] | gprof2dot | dot -Tpng -o output.png -->
+<node pkg="dvs_filter" type="dvs_filter" name="dvs_filter" output="screen">
+  <param name="max_interval" type="double" value="0.01"/>
+  <param name="search_radius" type="int" value="1"/>
+  <param name="min_flicker_hz" type="int" value="60"/>
+  <remap from="/events" to="$(arg events)"/> 
+  <remap from="/camera_info" to="$(arg camera_info)"/>
+</node>
+
+<!-- visualization -->
+<group ns = "filter">
+  <node name="dvs_renderer" pkg="dvs_renderer" type="dvs_renderer">
+    <!-- <param name="display_method" value="grayscale"/> -->
+    <param name="display_method" value="red-blue"/>
+    <remap from="events" to="/filter/events"/>
+    <remap from="image" to="$(arg image)"/>
+    <remap from="camera_info" to="$(arg camera_info)"/>
+  </node>
+
+  <!-- display -->
+  <node name="image_view" pkg="image_view" type="image_view">
+    <remap from="image" to="dvs_rendering"/>
+  </node>
+</group>
+
+<!-- visualization -->
+<group ns = "original">
+  <node name="dvs_renderer" pkg="dvs_renderer" type="dvs_renderer">
+    <!-- <param name="display_method" value="grayscale"/> -->
+    <param name="display_method" value="red-blue"/>
+    <remap from="events" to="$(arg events)"/>
+    <remap from="image" to="$(arg image)"/>
+    <remap from="camera_info" to="$(arg camera_info)"/>
+  </node>
+
+  <!-- display -->
+  <node name="image_view" pkg="image_view" type="image_view">
+    <remap from="image" to="dvs_rendering"/>
+  </node>
+</group>
+
+</launch>
