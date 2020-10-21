@@ -35,9 +35,9 @@ namespace dvs_filter
 
         void cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr &msg);
         void eventsCallback(const dvs_msgs::EventArray::ConstPtr &msg);
-        void grabEvent(const dvs_msgs::Event &ev);
+        void grabEvent(const dvs_msgs::Event &ev, bool &isOverlap);
         void lookupAdjacency(const dvs_msgs::Event &ev, bool &isAdjacency);
-        void filkerCounter(const dvs_msgs::Event &ev, bool &isFlicker);
+        void flickerCounter(const dvs_msgs::Event &ev, bool &isFlicker);
 
         bool _is_camera_info_got, _is_ts_init;
         double _ts_init;
@@ -47,7 +47,8 @@ namespace dvs_filter
         
         int _stack_depth;
         double *_stack;
-        uint8_t *_counter;
+        bool * _stack_polarity;
+        int8_t *_counter;
 
         Parameter _param;
     };
