@@ -78,44 +78,31 @@ namespace dvs_filter
                 s_count = msg->header.seq;
             }
 
-            bool isOverlap, isAdjacency, isFlicker;
+            bool isAdjacency, isFlicker;
 
             _events_msg->events.clear();
             for (uint32_t i = 0; i < msg->events.size(); ++i)
             {
-                grabEvent(msg->events[i], isOverlap);
+                grabEvent(msg->events[i]);
                 lookupAdjacency(msg->events[i], isAdjacency);
                 flickerCounter(msg->events[i], isFlicker);
 
-                if (not isOverlap & isAdjacency & not isFlicker)
+                if (isAdjacency & not isFlicker)
                     _events_msg->events.emplace_back(msg->events[i]);
             }
             _event_pub.publish(_events_msg);
         }
     }
 
-    void Filter::grabEvent(const dvs_msgs::Event &ev, bool &isOverlap)
+    void Filter::grabEvent(const dvs_msgs::Event &ev)
     {
-        isOverlap = true;
         const double ts = ev.ts.toSec();
         const int idx_ev = ev.y + _height * ev.x;
 
         if (ev.polarity > 0)
-        {
-            if (_sae_p[idx_ev] <= _sae_n[idx_ev])
-            {
-                _sae_p[idx_ev] = ts;
-                isOverlap = false;
-            }
-        }
+            _sae_p[idx_ev] = ts;
         else
-        {
-            if (_sae_p[idx_ev] >= _sae_n[idx_ev])
-            {
-                _sae_n[idx_ev] = ts;
-                isOverlap = false;
-            }
-        }
+            _sae_n[idx_ev] = ts;
         
         if (_counter[idx_ev] >= 0 && _stack_polarity[idx_ev] != ev.polarity || _counter[idx_ev] < 0)
         {

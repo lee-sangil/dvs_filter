@@ -35,7 +35,7 @@ namespace dvs_filter
 
         void cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr &msg);
         void eventsCallback(const dvs_msgs::EventArray::ConstPtr &msg);
-        void grabEvent(const dvs_msgs::Event &ev, bool &isOverlap);
+        void grabEvent(const dvs_msgs::Event &ev);
         void lookupAdjacency(const dvs_msgs::Event &ev, bool &isAdjacency);
         void flickerCounter(const dvs_msgs::Event &ev, bool &isFlicker);
 
