@@ -5,6 +5,7 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <opencv2/core/core.hpp>
 #include <dvs_msgs/Event.h>
 #include <dvs_msgs/EventArray.h>
 
@@ -22,6 +23,7 @@ namespace dvs_filter
 
         Filter(ros::NodeHandle &nh, ros::NodeHandle nh_private);
         virtual ~Filter();
+        void publishCameraInfo();
 
     private:
         std::string _ns;
@@ -29,9 +31,11 @@ namespace dvs_filter
         ros::NodeHandle _nh;
         ros::Subscriber _camera_info_sub;
         ros::Subscriber _event_sub;
+        ros::Publisher _camera_info_pub;
         ros::Publisher _event_pub;
 
         dvs_msgs::EventArrayPtr _events_msg;
+        sensor_msgs::CameraInfoPtr _camera_info_msg;
 
         void cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr &msg);
         void eventsCallback(const dvs_msgs::EventArray::ConstPtr &msg);

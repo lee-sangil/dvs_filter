@@ -25,9 +25,12 @@ else()
 endif()
 message(STATUS "Build type: " ${CMAKE_BUILD_TYPE})
 
+find_package(OpenCV REQUIRED)
+
 # Set include/library paths for successive compilation.
 include_directories(
-	include
+  include
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 # Search for all source files
@@ -42,4 +45,5 @@ cs_add_executable(${PROJECT}
 # Link the executable to the necesarry libs
 target_link_libraries(${PROJECT}
   ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
 )

@@ -17,11 +17,71 @@ namespace dvs_filter
         nh_private.param<int>("min_flicker_hz", _param.min_flicker_hz, 60);
         _param.stack_time_resolution = 0.1;
 
+        _events_msg = dvs_msgs::EventArrayPtr(new dvs_msgs::EventArray());
+        _camera_info_msg = sensor_msgs::CameraInfoPtr(new sensor_msgs::CameraInfo());
+
+        // Read .yaml file
+        std::string yaml;
+        nh_private.param<std::string>("yaml", yaml, "");
+
+        cv::FileStorage fSettings;
+        if (not yaml.empty())
+            fSettings.open(yaml, cv::FileStorage::READ);
+
+        if (fSettings.isOpened()){
+            ROS_INFO("Obtaion camera intrinsic calibration from yaml file: %s.", yaml.c_str());
+
+            double K[9] = {0,};
+            K[0] = fSettings["camera.fx"];
+            K[4] = fSettings["camera.fy"];
+            K[6] = fSettings["camera.cx"];
+            K[7] = fSettings["camera.cy"];
+            
+            double D[4] = {0,};
+            D[0] = fSettings["camera.k1"];
+            D[1] = fSettings["camera.k2"];
+            D[2] = fSettings["camera.p1"];
+            D[3] = fSettings["camera.p2"];
+
+            _width = fSettings["camera.width"];
+            _height = fSettings["camera.height"];
+
+            _sae_p = new double[_width * _height];
+            _sae_n = new double[_width * _height];
+
+            _stack_depth = std::ceil(2.*_param.min_flicker_hz*_param.stack_time_resolution);
+            _stack = new double[_stack_depth * _width * _height];
+            _stack_polarity = new bool[_width * _height];
+            _counter = new int8_t[_width * _height];
+
+            for (int i = 0; i < _width*_height; ++i)
+                _counter[i] = -1;
+
+            _events_msg->height = _height;
+            _events_msg->width = _width;
+
+            _camera_info_msg->distortion_model = "pinhole";
+            _camera_info_msg->width = _width;
+            _camera_info_msg->height = _height;
+
+            for (int i = 0; i < 9; ++i)
+                _camera_info_msg->K.at(i) = K[i];
+
+            for (int i = 0; i < 4; ++i)
+                _camera_info_msg->D.push_back(D[i]);
+
+            _is_camera_info_got = true;
+
+            _camera_info_pub = _nh.advertise<sensor_msgs::CameraInfo>(_ns + "/camera_info", 1, this);
+        }
+        else
+        {
+            _camera_info_sub = _nh.subscribe("camera_info", 1, &Filter::cameraInfoCallback, this);
+        }
+
         // Setup subscribers and publishers
-        _camera_info_sub = _nh.subscribe("camera_info", 1, &Filter::cameraInfoCallback, this);
         _event_sub = _nh.subscribe("events", 10, &Filter::eventsCallback, this);
         _event_pub = _nh.advertise<dvs_msgs::EventArray>(_ns + "/events", 10);
-        _events_msg = dvs_msgs::EventArrayPtr(new dvs_msgs::EventArray());
     }
 
     Filter::~Filter()
@@ -159,6 +219,11 @@ namespace dvs_filter
 
         if (_stack[_counter[idx_ev] + _stack_depth*idx_ev] > th_ts)
             isFlicker = true;
+    }
+
+    void Filter::publishCameraInfo()
+    {
+        _camera_info_pub.publish(_camera_info_msg);
     }
 
 } // namespace dvs_filter  
