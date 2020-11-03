@@ -162,9 +162,9 @@ namespace dvs_filter
         bool is_redundant = true;
         if (ev.polarity > 0)
         {
-            if (_sae_p[idx_ev] < _sae_n[idx_ev])
+            if (_sae_p[idx_ev] <= _sae_n[idx_ev])
                 is_redundant = false;
-            else if (ts > _sae_p[idx_ev] - _param.max_interval)
+            else if (ts > _sae_p[idx_ev] + _param.max_interval || _sae_p[idx_ev] == 0)
                 is_redundant = false;
 
             if (not is_redundant)
@@ -172,9 +172,9 @@ namespace dvs_filter
         }
         else
         {
-            if (_sae_n[idx_ev] < _sae_p[idx_ev])
+            if (_sae_n[idx_ev] <= _sae_p[idx_ev])
                 is_redundant = false;
-            else if (ts > _sae_n[idx_ev] - _param.max_interval)
+            else if (ts > _sae_n[idx_ev] + _param.max_interval || _sae_n[idx_ev] == 0)
                 is_redundant = false;
 
             if (not is_redundant)
