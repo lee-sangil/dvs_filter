@@ -138,31 +138,48 @@ namespace dvs_filter
                 s_count = msg->header.seq;
             }
 
-            bool isAdjacency, isFlicker;
+            bool is_redundant, is_adjacency, is_flicker;
 
             _events_msg->events.clear();
             for (uint32_t i = 0; i < msg->events.size(); ++i)
             {
-                grabEvent(msg->events[i]);
-                lookupAdjacency(msg->events[i], isAdjacency);
-                flickerCounter(msg->events[i], isFlicker);
+                is_redundant = grabEvent(msg->events[i]);
+                is_adjacency = lookupAdjacency(msg->events[i]);
+                is_flicker = flickerCounter(msg->events[i]);
 
-                if (isAdjacency & not isFlicker)
+                if (not is_redundant & is_adjacency & not is_flicker)
                     _events_msg->events.emplace_back(msg->events[i]);
             }
             _event_pub.publish(_events_msg);
         }
     }
 
-    void Filter::grabEvent(const dvs_msgs::Event &ev)
+    bool Filter::grabEvent(const dvs_msgs::Event &ev)
     {
         const double ts = ev.ts.toSec();
         const int idx_ev = ev.y + _height * ev.x;
 
+        bool is_redundant = true;
         if (ev.polarity > 0)
-            _sae_p[idx_ev] = ts;
+        {
+            if (_sae_p[idx_ev] < _sae_n[idx_ev])
+                is_redundant = false;
+            else if (ts > _sae_p[idx_ev] - _param.max_interval)
+                is_redundant = false;
+
+            if (not is_redundant)
+                _sae_p[idx_ev] = ts;
+        }
         else
-            _sae_n[idx_ev] = ts;
+        {
+            if (_sae_n[idx_ev] < _sae_p[idx_ev])
+                is_redundant = false;
+            else if (ts > _sae_n[idx_ev] - _param.max_interval)
+                is_redundant = false;
+
+            if (not is_redundant)
+                _sae_n[idx_ev] = ts;
+        }
         
         if (_counter[idx_ev] >= 0 && _stack_polarity[idx_ev] != ev.polarity || _counter[idx_ev] < 0)
         {
@@ -176,9 +193,11 @@ namespace dvs_filter
             if (_counter[idx_ev] == _stack_depth)
                 _counter[idx_ev] = 0;
         }
+
+        return is_redundant;
     }
 
-    void Filter::lookupAdjacency(const dvs_msgs::Event &ev, bool &isAdjacency)
+    bool Filter::lookupAdjacency(const dvs_msgs::Event &ev)
     {
         const double * sae;
         if (ev.polarity > 0)
@@ -194,31 +213,32 @@ namespace dvs_filter
         const int min_row = std::max(ev.y-_param.search_radius,0);
         const int max_row = std::min(ev.y+_param.search_radius,_height);
 
-        isAdjacency = false;
+        bool is_adjacency = false;
         for (int c = min_col; c < max_col; c++)
         {
             for (int r = min_row; r < max_row; r++)
             {
                 if (sae[r + _height * c] > th_ts && sae[r + _height * c] < ts)
                 {
-                    isAdjacency = true;
+                    is_adjacency = true;
                     break;
                 }
             }
         }
+        return is_adjacency;
     }
 
-    void Filter::flickerCounter(const dvs_msgs::Event &ev, bool &isFlicker)
+    bool Filter::flickerCounter(const dvs_msgs::Event &ev)
     {
         const double ts = ev.ts.toSec();
         const double th_ts = std::max(ts - _param.stack_time_resolution, 0.);
         
         const int idx_ev = ev.y + _height * ev.x;
 
-        isFlicker = false;
+        bool is_flicker = false;
 
         if (_stack[_counter[idx_ev] + _stack_depth*idx_ev] > th_ts)
-            isFlicker = true;
+            is_flicker = true;
     }
 
     void Filter::publishCameraInfo()
