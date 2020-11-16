@@ -15,10 +15,10 @@ namespace dvs_filter
     {
     public:
         struct Parameter{
-            double max_interval;
+            float max_interval;
             int search_radius;
             int min_flicker_hz;
-            double stack_time_resolution;
+            float stack_time_resolution;
         };
 
         Filter(ros::NodeHandle &nh, ros::NodeHandle nh_private);
@@ -47,10 +47,10 @@ namespace dvs_filter
         double _ts_init;
         int _width, _height;
         
-        double *_sae_p, *_sae_n;
+        float *_sae_p, *_sae_n;
         
         int _stack_depth;
-        double *_stack;
+        float *_stack;
         bool * _stack_polarity;
         int8_t *_counter;
 

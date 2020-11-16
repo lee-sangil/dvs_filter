@@ -12,7 +12,7 @@ namespace dvs_filter
         _is_camera_info_got = false;
         _is_ts_init = false;
 
-        nh_private.param<double>("max_interval", _param.max_interval, 0.01);
+        nh_private.param<float>("max_interval", _param.max_interval, 0.01);
         nh_private.param<int>("search_radius", _param.search_radius, 1);
         nh_private.param<int>("min_flicker_hz", _param.min_flicker_hz, 60);
         _param.stack_time_resolution = 0.1;
@@ -46,11 +46,11 @@ namespace dvs_filter
             _width = fSettings["camera.width"];
             _height = fSettings["camera.height"];
 
-            _sae_p = new double[_width * _height];
-            _sae_n = new double[_width * _height];
+            _sae_p = new float[_width * _height];
+            _sae_n = new float[_width * _height];
 
             _stack_depth = std::ceil(2.*_param.min_flicker_hz*_param.stack_time_resolution);
-            _stack = new double[_stack_depth * _width * _height];
+            _stack = new float[_stack_depth * _width * _height];
             _stack_polarity = new bool[_width * _height];
             _counter = new int8_t[_width * _height];
 
@@ -101,15 +101,15 @@ namespace dvs_filter
             _width = msg->width;
             _height = msg->height;
 
-            _sae_p = new double[_width * _height];
-            _sae_n = new double[_width * _height];
+            _sae_p = new float[_width * _height];
+            _sae_n = new float[_width * _height];
 
             _stack_depth = std::ceil(2.*_param.min_flicker_hz*_param.stack_time_resolution);
-            _stack = new double[_stack_depth * _width * _height];
+            _stack = new float[_stack_depth * _width * _height];
             _stack_polarity = new bool[_width * _height];
             _counter = new int8_t[_width * _height];
 
-            for (int i = 0; i < _width*_height; i++)
+            for (int i = 0; i < _width*_height; ++i)
                 _counter[i] = -1;
 
             _events_msg->height = _height;
@@ -156,7 +156,7 @@ namespace dvs_filter
 
     bool Filter::grabEvent(const dvs_msgs::Event &ev)
     {
-        const double ts = ev.ts.toSec();
+        const float ts = static_cast<float>(ev.ts.toSec() - _ts_init);
         const int idx_ev = ev.y + _height * ev.x;
 
         bool is_redundant = true;
@@ -188,9 +188,8 @@ namespace dvs_filter
 
             _stack_polarity[idx_ev] = ev.polarity;
             _stack[_counter[idx_ev] + _stack_depth*idx_ev] = ts;
-            _counter[idx_ev]++;
 
-            if (_counter[idx_ev] == _stack_depth)
+            if (++_counter[idx_ev] == _stack_depth)
                 _counter[idx_ev] = 0;
         }
 
@@ -199,14 +198,14 @@ namespace dvs_filter
 
     bool Filter::lookupAdjacency(const dvs_msgs::Event &ev)
     {
-        const double * sae;
+        const float * sae;
         if (ev.polarity > 0)
             sae = _sae_p;
         else
             sae = _sae_n;
             
-        const double ts = ev.ts.toSec();
-        const double th_ts = std::max(ts - _param.max_interval, 0.);
+        const float ts = static_cast<float>(ev.ts.toSec() - _ts_init);
+        const float th_ts = std::max(ts - _param.max_interval, 0.0f);
 
         const int min_col = std::max(ev.x-_param.search_radius,0);
         const int max_col = std::min(ev.x+_param.search_radius,_width);
@@ -214,11 +213,12 @@ namespace dvs_filter
         const int max_row = std::min(ev.y+_param.search_radius,_height);
 
         bool is_adjacency = false;
-        for (int c = min_col; c < max_col; c++)
+        for (int c = min_col; c < max_col; ++c)
         {
-            for (int r = min_row; r < max_row; r++)
+            int idx_col = _height * c;
+            for (int r = min_row; r < max_row; ++r)
             {
-                if (sae[r + _height * c] > th_ts && sae[r + _height * c] < ts)
+                if (sae[r + idx_col] > th_ts && sae[r + idx_col] < ts)
                 {
                     is_adjacency = true;
                     break;
@@ -230,8 +230,8 @@ namespace dvs_filter
 
     bool Filter::flickerCounter(const dvs_msgs::Event &ev)
     {
-        const double ts = ev.ts.toSec();
-        const double th_ts = std::max(ts - _param.stack_time_resolution, 0.);
+        const float ts = ev.ts.toSec();
+        const float th_ts = std::max(ts - _param.stack_time_resolution, 0.0f);
         
         const int idx_ev = ev.y + _height * ev.x;
 

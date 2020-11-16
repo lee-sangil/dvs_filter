@@ -7,7 +7,7 @@
 <arg name="camera_info" default="/dvs/camera_info"/>
 <arg name="yaml" default=""/>
 
-<node pkg="rosbag" type="play" name="player" output="screen" args="-q -r 1 $(arg file)"/>
+<node pkg="rosbag" type="play" name="player" output="screen" args="-q -r 5 $(arg file)"/>
 
 <!-- filter -->
 <!-- <env name="GMON_OUT_PREFIX" value="dvs_filter"/> -->
