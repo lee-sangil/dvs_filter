@@ -230,7 +230,7 @@ namespace dvs_filter
 
     bool Filter::flickerCounter(const dvs_msgs::Event &ev)
     {
-        const float ts = ev.ts.toSec();
+        const float ts = static_cast<float>(ev.ts.toSec() - _ts_init);
         const float th_ts = std::max(ts - _param.stack_time_resolution, 0.0f);
         
         const int idx_ev = ev.y + _height * ev.x;
