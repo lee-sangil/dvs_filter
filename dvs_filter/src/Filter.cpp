@@ -12,10 +12,12 @@ namespace dvs_filter
         _is_camera_info_got = false;
         _is_ts_init = false;
 
-        nh_private.param<float>("max_interval", _param.max_interval, 0.01);
+        double max_interval;
+        nh_private.param<double>("max_interval", max_interval, 0.01);
         nh_private.param<int>("search_radius", _param.search_radius, 1);
         nh_private.param<int>("min_flicker_hz", _param.min_flicker_hz, 60);
         _param.stack_time_resolution = 0.1;
+        _param.max_interval = static_cast<float>(max_interval);
 
         _events_msg = dvs_msgs::EventArrayPtr(new dvs_msgs::EventArray());
         _camera_info_msg = sensor_msgs::CameraInfoPtr(new sensor_msgs::CameraInfo());
