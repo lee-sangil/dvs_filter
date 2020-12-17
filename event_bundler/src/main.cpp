@@ -13,7 +13,7 @@ int main(int argc, char **argv)
 
     EventBundler eventBundler(yaml);
 
-    ros::Publisher event_publisher = nh.advertise<dvs_msgs::EventArray>("/bundle_events", 10);
+    ros::Publisher event_publisher = nh.advertise<dvs_msgs::EventArray>("/bundler/events", 10);
     ros::Subscriber event_sub = nh.subscribe("/events", 10, &EventBundler::GrabEvent, &eventBundler);
     eventBundler.setEventPublisher(event_publisher);
 

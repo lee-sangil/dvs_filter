@@ -18,7 +18,8 @@
   <param name="max_interval" type="double" value="0.005"/>
   <param name="search_radius" type="int" value="1"/>
   <param name="min_flicker_hz" type="int" value="50"/>
-  <param name="yaml" type="string" value="$(arg yaml)"/>
+  <param name="camera_yaml" type="string" value="$(arg yaml)"/>
+  <param name="setting_yaml" type="string" value="$(find event_filter)/config/setting.yaml"/>
   <remap from="/events" to="$(arg events)"/> 
   <remap from="/camera_info" to="$(arg camera_info)"/>
 </node>
