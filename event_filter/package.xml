@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-    <name>dvs_filter</name>
+    <name>event_filter</name>
     <version>0.1.0</version>
     <description>Event filter for DVS camera</description>
 

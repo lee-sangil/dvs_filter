@@ -10,13 +10,14 @@
 <node name="davis_ros_driver" pkg="davis_ros_driver" type="davis_ros_driver"/>
 
 <!-- filter -->
-<!-- <env name="GMON_OUT_PREFIX" value="dvs_filter"/> -->
-<!-- Use gprof /path/to/exe ~/.ros/dvs_filter.[pid] | gprof2dot | dot -Tpng -o output.png -->
-<node pkg="dvs_filter" type="dvs_filter" name="dvs_filter" output="screen" launch-prefix="bash -c 'sleep 1; $0 $@' ">
-  <param name="max_interval" type="double" value="0.01"/>
+<!-- <env name="GMON_OUT_PREFIX" value="event_filter"/> -->
+<!-- Use gprof /path/to/exe ~/.ros/event_filter.[pid] | gprof2dot | dot -Tpng -o output.png -->
+<node pkg="event_filter" type="event_filter" name="event_filter" output="screen" launch-prefix="bash -c 'sleep 1; $0 $@' ">
+  <param name="max_interval" type="double" value="0.005"/>
   <param name="search_radius" type="int" value="1"/>
-  <param name="min_flicker_hz" type="int" value="60"/>
-  <param name="yaml" type="string" value="$(arg yaml)"/>
+  <param name="min_flicker_hz" type="int" value="50"/>
+  <param name="camera_yaml" type="string" value="$(arg yaml)"/>
+  <param name="setting_yaml" type="string" value="$(find event_filter)/config/setting.yaml"/>
   <remap from="/events" to="$(arg events)"/> 
   <remap from="/camera_info" to="$(arg camera_info)"/>
 </node>

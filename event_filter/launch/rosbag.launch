@@ -1,19 +1,21 @@
 <?xml version="1.0"?>
 <launch>
 
-<arg name="file" default="/media/icsl/Samsung_T5/Dataset/DVS/EV-IMO/fast/raw/seq_00/seq_00.bag"/>
 <arg name="events" default="/dvs/events"/>
 <arg name="image" default="/dvs/image_raw"/>
 <arg name="camera_info" default="/dvs/camera_info"/>
-<arg name="yaml" default="/media/icsl/Samsung_T5/Dataset/DVS/EV-IMO/camera.yaml"/>
+<!-- <arg name="file" default="/media/icsl/Samsung_T5/Dataset/DVS/EV-IMO/fast/raw/seq_00/seq_00.bag"/>
+<arg name="yaml" default="/media/icsl/Samsung_T5/Dataset/DVS/EV-IMO/camera.yaml"/> -->
+<arg name="file" default="/media/icsl/Samsung_T5/Dataset/DVS/DAVIS240C/shapes_rotation.bag"/>
+<arg name="yaml" default=""/>
 
-<node pkg="rosbag" type="play" name="player" output="screen" args="-q -r 0.05 $(arg file)"/>
+<node pkg="rosbag" type="play" name="player" output="screen" args="-q -r 1 $(arg file)"/>
 
 <!-- filter -->
-<!-- <env name="GMON_OUT_PREFIX" value="dvs_filter"/> -->
-<!-- Use gprof /path/to/exe ~/.ros/dvs_filter.[pid] | gprof2dot | dot -Tpng -o output.png -->
-<node pkg="dvs_filter" type="dvs_filter" name="dvs_filter" output="screen">
-  <param name="max_interval" type="double" value="0.01"/>
+<!-- <env name="GMON_OUT_PREFIX" value="event_filter"/> -->
+<!-- Use gprof /path/to/exe ~/.ros/event_filter.[pid] | gprof2dot | dot -Tpng -o output.png -->
+<node pkg="event_filter" type="event_filter" name="event_filter" output="screen">
+  <param name="max_interval" type="double" value="0.005"/>
   <param name="search_radius" type="int" value="1"/>
   <param name="min_flicker_hz" type="int" value="50"/>
   <param name="yaml" type="string" value="$(arg yaml)"/>

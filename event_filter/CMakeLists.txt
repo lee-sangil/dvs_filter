@@ -1,6 +1,6 @@
 # Project
 cmake_minimum_required(VERSION 2.8.3)
-set(PROJECT dvs_filter)
+set(PROJECT event_filter)
 project(${PROJECT})
 
 set(DEBUG false)

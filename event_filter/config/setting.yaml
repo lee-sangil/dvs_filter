@@ -1,0 +1,5 @@
+%YAML 1.1
+
+check_redundancy: 0
+check_adjacency: 1
+check_flicker: 1

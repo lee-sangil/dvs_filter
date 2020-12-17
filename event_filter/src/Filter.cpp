@@ -1,7 +1,7 @@
 #include "Filter.hpp"
 #include <algorithm>
 
-namespace dvs_filter
+namespace dvs_preprocessor
 {
     Filter::Filter(ros::NodeHandle &nh, ros::NodeHandle nh_private) : _nh(nh)
     {
@@ -16,6 +16,9 @@ namespace dvs_filter
         nh_private.param<double>("max_interval", max_interval, 0.01);
         nh_private.param<int>("search_radius", _param.search_radius, 1);
         nh_private.param<int>("min_flicker_hz", _param.min_flicker_hz, 60);
+        nh_private.param<bool>("check_redundancy", _param.check_redundancy, false);
+        nh_private.param<bool>("check_adjacency", _param.check_adjacency, true);
+        nh_private.param<bool>("check_flicker", _param.check_flicker, true);
         _param.stack_time_resolution = 0.1;
         _param.max_interval = static_cast<float>(max_interval);
 
@@ -23,15 +26,29 @@ namespace dvs_filter
         _camera_info_msg = sensor_msgs::CameraInfoPtr(new sensor_msgs::CameraInfo());
 
         // Read .yaml file
-        std::string yaml;
-        nh_private.param<std::string>("yaml", yaml, "");
-
         cv::FileStorage fSettings;
-        if (not yaml.empty())
-            fSettings.open(yaml, cv::FileStorage::READ);
+
+        std::string setting_yaml;
+        nh_private.param<std::string>("setting_yaml", setting_yaml, "");
+        
+        if (not setting_yaml.empty())
+            fSettings.open(setting_yaml, cv::FileStorage::READ);
 
         if (fSettings.isOpened()){
-            ROS_INFO("Obtaion camera intrinsic calibration from yaml file: %s.", yaml.c_str());
+            _param.check_redundancy = static_cast<int>(fSettings["check_redundancy"]) != 0;
+            _param.check_adjacency = static_cast<int>(fSettings["check_adjacency"]) != 0;
+            _param.check_flicker = static_cast<int>(fSettings["check_flicker"]) != 0;
+            fSettings.release();
+        }
+
+        std::string camera_yaml;
+        nh_private.param<std::string>("camera_yaml", camera_yaml, "");
+
+        if (not camera_yaml.empty())
+            fSettings.open(camera_yaml, cv::FileStorage::READ);
+
+        if (fSettings.isOpened()){
+            ROS_INFO("Obtaion camera intrinsic calibration from camera_yaml file: %s.", camera_yaml.c_str());
 
             double K[9] = {0,};
             K[0] = fSettings["camera.fx"];
@@ -149,7 +166,9 @@ namespace dvs_filter
                 is_adjacency = lookupAdjacency(msg->events[i]);
                 is_flicker = flickerCounter(msg->events[i]);
 
-                if (not is_redundant & is_adjacency & not is_flicker)
+                if ((not is_redundant | not _param.check_redundancy)
+                        && (is_adjacency | not _param.check_adjacency)
+                        && (not is_flicker | not _param.check_flicker))
                     _events_msg->events.emplace_back(msg->events[i]);
             }
             _event_pub.publish(_events_msg);
@@ -237,10 +256,10 @@ namespace dvs_filter
         
         const int idx_ev = ev.y + _height * ev.x;
 
-        bool is_flicker = false;
-
         if (_stack[_counter[idx_ev] + _stack_depth*idx_ev] > th_ts)
-            is_flicker = true;
+            return true;
+        else
+            return false;
     }
 
     void Filter::publishCameraInfo()
@@ -248,4 +267,4 @@ namespace dvs_filter
         _camera_info_pub.publish(_camera_info_msg);
     }
 
-} // namespace dvs_filter  
+} // namespace dvs_preprocessor  

@@ -1,0 +1,6 @@
+%YAML:1.0
+
+Version: 1.0
+
+# delta_time: 0.01
+max_events: 4000

@@ -2,11 +2,11 @@
 
 int main(int argc, char *argv[])
 {
-	ros::init(argc, argv, "dvs_filter");
+	ros::init(argc, argv, "event_filter");
 	ros::NodeHandle nh;
 	ros::NodeHandle nh_private("~");
 
-	dvs_filter::Filter filter(nh, nh_private);
+	dvs_preprocessor::Filter filter(nh, nh_private);
 	ros::Rate loop_rate(200);
 
 	while(ros::ok())

@@ -1,5 +1,5 @@
-#ifndef __DVS_FILTER_H__
-#define __DVS_FILTER_H__
+#ifndef __EVENT_FILTER_H__
+#define __EVENT_FILTER_H__
 
 #include <vector>
 #include <ros/ros.h>
@@ -9,12 +9,15 @@
 #include <dvs_msgs/Event.h>
 #include <dvs_msgs/EventArray.h>
 
-namespace dvs_filter
+namespace dvs_preprocessor
 {
     class Filter
     {
     public:
         struct Parameter{
+            bool check_redundancy;
+            bool check_adjacency;
+            bool check_flicker;
             float max_interval;
             int search_radius;
             int min_flicker_hz;
@@ -56,6 +59,6 @@ namespace dvs_filter
 
         Parameter _param;
     };
-} // namespace dvs_filter
+} // namespace dvs_preprocessor
 
 #endif
