@@ -153,7 +153,7 @@ namespace dvs_preprocessor
         {
             if (msg->header.seq > ++s_count)
             {
-                std::cout << "Missing events [seq=" << s_count << "..." << msg->header.seq-1 << ']' << std::endl;
+                std::cout << "Event_filter: Missing events [seq=" << s_count << "..." << msg->header.seq-1 << ']' << std::endl;
                 s_count = msg->header.seq;
             }
 

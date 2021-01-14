@@ -3,4 +3,4 @@
 Version: 1.0
 
 # delta_time: 0.01
-max_events: 4000
+max_events: 15000

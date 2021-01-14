@@ -20,10 +20,20 @@ EventBundler::EventBundler(std::string yaml)
 
 void EventBundler::GrabEvent(dvs_msgs::EventArrayConstPtr msg)
 {
+    static uint32_t s_count = 0;
+
     if (time_curr < 0){
         next_send_time = msg->events[0].ts.toSec() + delta_time;
         bundle_msg->height = msg->height;
         bundle_msg->width = msg->width;
+        s_count = msg->header.seq;
+    }
+
+    if (msg->header.seq > ++s_count)
+    {
+        if (s_count != 1)
+            std::cout << "Event_bundler: Missing event [seq=" << s_count << "..." << msg->header.seq-1 << ']' << std::endl;
+        s_count = msg->header.seq;
     }
 
     for (int i = 0, len = msg->events.size(); i < len; ++i){
