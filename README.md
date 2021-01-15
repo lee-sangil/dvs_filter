@@ -1,8 +1,8 @@
 dvs_preprocessor
 ===========
 
-# Filter
+## Filter
 
 The filter algorithm disregards events which belong to outlier.
 
-# Bundler
+## Bundler
